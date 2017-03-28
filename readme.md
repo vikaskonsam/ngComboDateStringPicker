@@ -1,0 +1,3 @@
+ngComboDateStringPicker
+
+bower install ngComboDateStringPicker --save
