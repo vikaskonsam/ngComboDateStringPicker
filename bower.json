@@ -1,0 +1,27 @@
+{
+  "name": "ng_combodatestringpicker",
+  "version": "1.0.0",
+  "authors": [
+    "vikas konsam (vikas.konsam@gmail.com)"
+  ],
+  "description": "An Angular directive to select dates using combo boxes and generate the output as string",
+  "main": "source/ngComboDateStringPicker.js",
+  "keywords": [
+    "angular",
+    "directive",
+    "date",
+    "picker",
+    "date",
+    "picker",
+    "combobox"
+  ],
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/vikaskonsam/ngComboDateStringPicker",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
