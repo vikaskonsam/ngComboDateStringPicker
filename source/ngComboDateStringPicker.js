@@ -26,81 +26,132 @@ angular.module("ngComboDatePicker", [])
         return res;
     };
 
-    function getDays(month, year) {
-        var maxDays = maxDaysForMonth(month, year);
-        var days = [];
-        for(var i = 1; i <= maxDays; i++) {
-            day = ('0' + i).slice(-2).toString();
-            days.push(day);
+    function getDates(obj) {
+        var dates = [];
+        var maxDays = maxDaysForMonth(obj.selectedMonth, obj.selectedYear);
+
+        var maxDateParts = getDateParts(obj.maxDate);
+        var inputMaxYear = maxDateParts.year;
+        var inputMaxMonth = maxDateParts.month;
+        var inputMaxDate = maxDateParts.date;
+
+        var minDateParts = getDateParts(obj.minDate);
+        var inputMinYear = minDateParts.year;
+        var inputMinMonth = minDateParts.month;
+        var inputMinDate = minDateParts.date;
+
+        var currentSelectedYear = obj.selectedYear;
+        var currentSelectedMonth = obj.selectedMonth;
+
+        var initialValue = 1;
+
+        if(currentSelectedYear == inputMaxYear && currentSelectedMonth == inputMaxMonth) {
+            maxDays = parseInt(inputMaxDate);
         }
-        return days;
+
+        if(currentSelectedYear == inputMinYear && currentSelectedMonth == inputMinMonth) {
+            initialValue = parseInt(inputMinDate);
+        }
+
+        for(var i = initialValue; i <= maxDays; i++) {
+            date = ('0' + i).slice(-2).toString();
+            dates.push(date);
+        }
+        return dates;
     };
 
-    function getMonths() {
+    function getMonths(obj) {
         var monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return [{
-            label : "Jan",
-            value : "01",
-        },{
-            label : "Feb",
-            value : "02",
-        },{
-            label : "Mar",
-            value : "03",
-        },{
-            label : "Apr",
-            value : "04",
-        },{
-            label : "May",
-            value : "05",
-        },{
-            label : "Jun",
-            value : "06",
-        },{
-            label : "July",
-            value : "07",
-        },{
-            label : "Aug",
-            value : "08",
-        },{
-            label : "Sep",
-            value : "09",
-        },{
-            label : "Oct",
-            value : "10",
-        },{
-            label : "Nov",
-            value : "11",
-        },{
-            label : "Dec",
-            value : "12",
-        }];
+        var monthInt = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+        var monthsArray = [];
+
+        var arrayLength = monthName.length;
+        var initVal = 0;
+
+        var maxDateParts = getDateParts(obj.maxDate);
+        var inputMaxYear = maxDateParts.year;
+        var inputMaxMonth = maxDateParts.month;
+
+        var minDateParts = getDateParts(obj.minDate);
+        var inputMinYear = minDateParts.year;
+        var inputMinMonth = minDateParts.month;
+        
+        var currentSelectedYear = obj.selectedYear;
+
+        if(currentSelectedYear) {
+            if(currentSelectedYear == inputMaxYear) {
+                arrayLength = parseInt(inputMaxMonth);
+            }
+
+            if(currentSelectedYear == inputMinYear) {
+                initVal = parseInt(inputMinMonth) - 1;
+            }
+        }
+
+        for(var i = initVal; i < arrayLength; i++) {
+            var obj = {
+                label : monthName[i],
+                value : monthInt[i]
+            }
+            monthsArray.push(obj);
+        }
+
+        return monthsArray;
     };
 
-    function getMinParts(minDate) {
-
-    };
-
-    function getMaxParts(maxDate) {
-
-    };
-
-    function getYears() {
+    
+    function getYears(obj) {
         var years = [];
         var today = new Date();
         var currentYear = today.getFullYear();
 
-        for(var i = currentYear - 100; i <= currentYear; i++) {
+        /* for future year sent from the data */
+        if(obj.selectedYear > currentYear) {
+            currentYear = obj.selectedYear;
+        }
+
+        var o = {
+            maxYear : currentYear,
+            minYear : currentYear - 100
+        };
+
+
+        var inputMaxYear = getDateParts(obj.maxDate).year;
+        var inputMinYear = getDateParts(obj.minDate).year;
+
+        if(inputMinYear) {
+            o.minYear = inputMinYear
+        }
+
+        if(inputMaxYear) {
+            o.maxYear = inputMaxYear
+        }
+        
+        for(var i = o.minYear; i <= o.maxYear; i++) {
             years.push(i.toString());
         }
         return years;
     };
 
-    function formatDateStr(format, year, month, day) {
+    function getDateParts(date) {
+        if(!date) {
+            return {};
+        }
+        
+        var splitDate = date.split('-');
+        
+        return {
+            year : splitDate[0],
+            month : splitDate[1],
+            date : splitDate[2]
+        };
+    };
+
+    function formatDateStr(year, month, date) {
         var dateFormat = "yyyy-mm-dd";
         var formattedDate = dateFormat.replace('yyyy', year);
         formattedDate = formattedDate.replace('mm', month);
-        formattedDate = formattedDate.replace('dd', day);
+        formattedDate = formattedDate.replace('dd', date);
         return formattedDate;
     };
    
@@ -117,15 +168,27 @@ angular.module("ngComboDatePicker", [])
             ngRequired: '@'
         },
         require: 'ngModel',
-        controller: ['$scope', '$filter', function($scope, $filter) {           
-            
-            $scope.createSelectItems = function() {
-                $scope.days = getDays($scope.month, $scope.year);
-                $scope.months = getMonths();
+        controller: ['$scope', '$filter', function($scope, $filter) {     
+
+            /* create the option items for the select boxes */      
+            $scope.createOptionItems = function() {
                 $scope.years = getYears({
-                    order : $scope.ngOrder,
                     minDate : $scope.ngMinDate,
-                    maxDate : $scope.ngMaxDate
+                    maxDate : $scope.ngMaxDate,
+                    selectedYear : $scope.year
+                });
+
+                $scope.months = getMonths({
+                    minDate : $scope.ngMinDate,
+                    maxDate : $scope.ngMaxDate,
+                    selectedYear : $scope.year
+                });
+
+                $scope.dates = getDates({
+                    minDate : $scope.ngMinDate,
+                    maxDate : $scope.ngMaxDate,
+                    selectedYear : $scope.year,
+                    selectedMonth : $scope.month
                 });
 
                 /* if year order is desc */
@@ -135,19 +198,19 @@ angular.module("ngComboDatePicker", [])
             };
 
             $scope.setModelValue = function() {
-                if(!$scope.year || !$scope.month || !$scope.day) {
+                if(!$scope.year || !$scope.month || !$scope.date) {
                     $scope.ngModel = null;
                     return;
                 }
-                $scope.ngModel = formatDateStr('', $scope.year, $scope.month, $scope.day);
+                $scope.ngModel = formatDateStr($scope.year, $scope.month, $scope.date);
             };
 
             $scope.loadInitialModel = function() {
                 if($scope.ngModel) {
-                    var splitModel = $scope.ngModel.split('-');
-                    $scope.year = splitModel[0];
-                    $scope.month = splitModel[1];
-                    $scope.day = splitModel[2];
+                    var splitModel = getDateParts($scope.ngModel);
+                    $scope.year = splitModel.year;
+                    $scope.month = splitModel.month;
+                    $scope.date = splitModel.date;
                 };
             };
 
@@ -156,21 +219,21 @@ angular.module("ngComboDatePicker", [])
                     var placholder = $scope.ngPlaceholder.split(',');
                     $scope.yearPh = placholder[0];
                     $scope.monthPh = placholder[1];
-                    $scope.dayPh = placholder[2];
+                    $scope.datePh = placholder[2];
                 }
             }; 
 
             $scope.init = function() {
                 $scope.loadInitialModel();
                 $scope.setModelValue();
-                $scope.createSelectItems();
+                $scope.createOptionItems();
                 $scope.getPlaceholders();
             };
             
             $scope.init();
-            $scope.$watch('[year,day,month]', function() {
+            $scope.$watch('[year,date,month]', function() {
                 $scope.setModelValue();
-                $scope.createSelectItems();                
+                $scope.createOptionItems();                
             }, true);
 
         }],
@@ -189,7 +252,7 @@ angular.module("ngComboDatePicker", [])
         template: function(element, attrs) {
             // Generate HTML code.
             var html =
-                '<select ng-model="day" placholder="Days" ng-options = "day as day for day in days"><option value="" disabled selected>{{dayPh || "Date"}}</option></select>' +
+                '<select ng-model="date" placholder="dates" ng-options = "date as date for date in dates"><option value="" disabled selected>{{datePh || "Date"}}</option></select>' +
                 '<select ng-model="month" ng-options = "month.value as month.label for month in months"><option value="" disabled selected>{{monthPh || "Month"}}</option></select>' +
                 '<select ng-model="year" ng-options = "year as year for year in years"><option value="" disabled selected> {{yearPh || "Year"}} </option></select>';
             return html;
